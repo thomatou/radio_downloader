@@ -42,6 +42,9 @@ class RadioDownloader:
         the dict is returned as well as written to file whose name has to be
         passed in as an argument.
         """
+
+        browser = webdriver.Firefox(executable_path='/Users/tchavas/geckodriver')
+
         tracks = {0:{'artist': '', 'song': ''}}
 
         counter = 1
@@ -86,12 +89,20 @@ class RadioDownloader:
 
         # The program is set to only stop running when interrupted by the user,
         # at which point the dictionary is written to file in json format
-        except KeyboardInterrupt:
+        except (Exception, KeyboardInterrupt):
             with open(output_filename, 'w') as file:
                 json.dump(tracks, file, indent=2)
 
             browser.quit()
             return tracks
+
+        #
+        # except Exception:
+        #     with open(output_filename, 'w') as file:
+        #         json.dump(tracks, file, indent=2)
+        #
+        #     browser.quit()
+        #     return tracks
 
     def get_spotify_track_ids(self, json_dict):
         """
@@ -258,27 +269,35 @@ class RadioDownloader:
 
         # Now that we've compiled all of the new songs into one list,
         # let's add them to the playlist!
-        sp.user_playlist_add_tracks(self.spotify_username,
-                                    playlist_id=playlist_data['id'],
-                                    tracks=list_song_ids)
+        if list_song_ids:
+            sp.user_playlist_add_tracks(self.spotify_username,
+                                        playlist_id=playlist_id,
+                                        tracks=list_song_ids)
 
-        # Should be done!
+            # Should be done!
 
-        print('Playlist populated...')
+            print('Playlist populated...')
 
         if reject_songs:
             print("Here is a list of the songs that weren't found on Spotify:")
-            print(list_song_ids)
+            print(reject_songs)
 
         print('Exiting program...')
 
+if __name__ == '__main__':
+    if len(sys.argv) == 4:
+        username = sys.argv[1]
+        output_filename = sys.argv[2]
+        spotify_playlist_name = sys.argv[3]
 
-user = RadioDownloader('thomatou')
+        user = RadioDownloader(username)
+        music_list = user.djam_radio(output_filename)
+        updated_music_list = user.get_spotify_track_ids(music_list)
+        djam_playlist_id = user.get_spotify_playlist_id(spotify_playlist_name)
 
-music_list = user.djam_radio()
+        user.populate_playlist(djam_playlist_id, updated_music_list)
 
-updated_music_list = user.get_spotify_track_ids(music_list)
-
-djam_playlist_id = user.get_spotify_playlist_id('Djam Radio')
-
-user.populate_playlist(djam_playlist_id, updated_music_list)
+    else:
+        print('Usage:\n',
+        "python3.7 %s spotify_username output_filename spotify_playlist_name"
+        % (sys.argv[0]))
