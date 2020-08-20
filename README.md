@@ -15,6 +15,7 @@ Requirements:
 * Python 3.x (tested with python3.7)
 * [`spotipy`](https://spotipy.readthedocs.io/en/2.9.0/)
 * [`selenium`](https://pypi.org/project/selenium/)
+* [`geckodriver`](https://github.com/mozilla/geckodriver/releases)
 
 Assuming you already have an account with Spotify (premium or not), you'll need to register an app with them ([see here](https://developer.spotify.com/dashboard/applications), which will take you a whole two minutes). In return, you will be given a client ID and a client secret, which you will want to put into `mock_credentials.py`; this will authorize the various calls that you'll make to the Spotify API. You will also need to input your Spotify username into the `mock_credentials.py` file, and change the name of `mock_credentials.py` to `credentials.py`.
 
