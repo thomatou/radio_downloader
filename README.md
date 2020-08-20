@@ -7,6 +7,8 @@ This lends itself well to a script that scrapes this information in real-time, s
 
 The idea here is to take advantage of [Oracle's Always Free servers](https://www.oracle.com/cloud/free/#always-free), which one can set up for, well, free, and use to run this script indefinitely, without having to keep your local machine on. You do need a credit card to set up a server, but you won't be charged for an Always Free server, which is powerful enough to run this script.
 
+Note that this script could easily be adapted to scrape any web radio that displays the name of its songs in real time! 
+
 ## Let's go! 
 
 Requirements: 
