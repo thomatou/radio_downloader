@@ -1,11 +1,11 @@
 # Radio Downloader
-## Ever wished you could get all the songs from your favourite radio station into a Spotify playlist?
+## Get all the songs from your favourite radio station into a Spotify playlist!
 
 This script was originally written to access the excellent music selection of Djam Radio (www.djamradio.com). For every track played on this radio station, the name of the artist and the name of the song is posted, live, on the website.
 
-This lends itself well to a script that scrapes this information in real-time, stores it in memory, and dumps the songs into a Spotify playlist. This script will scrape track names from the radio station indefinitely (or until the user interrupts it), and add them to the Spotify playlist in batches of 10 – to minimise the number of calls to the API. Note that the script will also prevent the addition of duplicates to the playlist.
+This lends itself well to a script that scrapes this information in real-time and dumps the songs into a Spotify playlist. This script will scrape track names from the radio station indefinitely (or until the user interrupts it), and add them to the Spotify playlist in batches of 10 – to minimise the number of calls to the API. Note that the script will also prevent the addition of duplicates to the playlist.
 
-The idea here is to take advantage of [Oracle's Always Free servers](https://www.oracle.com/cloud/free/#always-free), which one can set up for, well, free, and use to run this script indefinitely, without having to keep your local machine on. You do need a credit card to set up a server, but you won't be charged for an Always Free server, which is powerful enough to run this script.
+The idea here is to take advantage of [Oracle's Always Free servers](https://www.oracle.com/cloud/free/#always-free), which one can set up for, well, free, and run this script indefinitely, without having to keep your local machine on. You do need a credit card to set up a server, but you won't be charged for an Always Free server, which is powerful enough to run this script.
 
 Note that this script could easily be adapted to scrape any web radio that displays the name of its songs in real time! 
 
