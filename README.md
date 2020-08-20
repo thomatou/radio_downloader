@@ -10,7 +10,7 @@ The idea here is to take advantage of [Oracle's Always Free servers](https://www
 ## Let's go! 
 
 Requirements: 
-* Python 3 (tested with python3.7)
+* Python 3.x (tested with python3.7)
 * [`spotipy`](https://spotipy.readthedocs.io/en/2.9.0/)
 * [`selenium`](https://pypi.org/project/selenium/)
 
