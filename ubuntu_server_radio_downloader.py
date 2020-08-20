@@ -31,6 +31,7 @@ class RadioDownloader:
                                 state=None,
                                 scope='playlist-read-private playlist-modify-private',
                                 username=self.spotify_username)
+
             token = id.refresh_access_token(credentials.refresh_token)\
             ['access_token']
 
@@ -59,14 +60,8 @@ class RadioDownloader:
         song_path = '/html/body/div[2]/div[7]/div[1]/div[1]/div[1]/div[2]/span[2]'
 
         browser = webdriver.Firefox(
-                        options=options,
-                        executable_path='/usr/bin/geckodriver')
-
-        # all_playlist_songs is a set that contains all the song ids of all
-        # the songs in the playlist
-
-        playlist_id = self.get_spotify_playlist_id('Djam Radio')
-        sp = self.identify()
+                            options=options,
+                            executable_path='/usr/bin/geckodriver')
 
         while True:
             try:
@@ -79,7 +74,8 @@ class RadioDownloader:
 
                 # Check if a new song is on.
                 # If not go through the while loop again.
-                if artist == tracks[counter-1]['artist'] and song == tracks[counter-1]['song']:
+                if artist == tracks[counter-1]['artist'] and \
+                song == tracks[counter-1]['song']:
                     continue
 
                 # Need to discard all 'songs' that start with
@@ -96,9 +92,7 @@ class RadioDownloader:
                 if counter % 10 == 0:
                     # Let's process the last 10 songs and add them to the playlist
                     updated_json_dict = self.get_spotify_track_ids(tracks)
-                    ### NEED TO UPDATE all_playlist_songs HERE WITH NEW TRACK IDS
 
-                    # Now add them to the playlist
                     self.populate_playlist('Djam Radio', updated_json_dict)
 
                     # Let's save to disk the songs that we've scraped
@@ -107,13 +101,15 @@ class RadioDownloader:
                             file.write(tracks[song_num]['artist'] + '///' +\
                                        tracks[song_num]['song'] + '\n')
 
-                    # Now we can overwrite the name of the tracks in memory
+    # Now we can overwrite the name of the tracks in memory but keep the latest
+    # song scraped in the dic so we don't get a duplicate on the next iteration
+    # of the  while loop
                     temp = {1:{'artist': tracks[counter-1]['artist'], 'song': tracks[counter-1]['song']}}
                     print(temp)
                     tracks = temp
                     counter = 2
 
-                    # Let's also restart the browser, so that we don't get timeouts
+    # Let's also restart the browser, so that we don't get timeouts
                     browser.quit()
                     browser = webdriver.Firefox(
                                     options=options,
@@ -145,9 +141,7 @@ class RadioDownloader:
             search_string = json_dict[song_num]['artist'] + ' ' + json_dict[song_num]['song']
 
             try:
-                temp = sp.search(q=search_string,
-                                 limit=1,
-                                 type='track')
+                temp = sp.search(q=search_string, limit=1, type='track')
                 temp_id = temp['tracks']['items'][0]['id']
                 json_dict[song_num].update({'spotify_id':temp_id})
                 continue
@@ -174,10 +168,14 @@ class RadioDownloader:
             except IndexError:
                 pass
 
-            # If that doesn't work, see if there's a 'feat' that we can remove
+            # If that doesn't work, see if there's a 'feat' in the song or
+            # artist name that we can remove, and only keep what comes before
+            # the 'feat'.
             try:
                 if 'feat' in s:
-                    s = s.split('feat')[0]
+                    s = json_dict[song_num]['artist'].split('feat')[0] +\
+                        json_dict[song_num]['song'].split('feat')[0]
+
                     temp = sp.search(q=s,
                                      limit=1,
                                      type='track')
@@ -243,7 +241,8 @@ class RadioDownloader:
                     return item['id']
 
             print('Playlist not found. Input is case-sensitive.')
-            print('Please re-enter the name of the playlist whose ID you wish to access:')
+            print('Please re-enter the name of the playlist whose ID you wish\
+                   to access:')
 
             name_of_playlist = input()
 
@@ -320,9 +319,6 @@ class RadioDownloader:
                 for element in reject_songs:
                     if element != ['', '']:
                         file.write(str(element))
-
-
-
 
 
 user = RadioDownloader()
