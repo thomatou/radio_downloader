@@ -9,6 +9,8 @@ The idea here is to take advantage of [Oracle's Always Free servers](https://www
 
 Note that this script could easily be adapted to scrape any web radio that displays the name of its songs in real time! 
 
+Link to the Djam Radio playlist created using this script: https://open.spotify.com/playlist/3nSxhy304kVPZz4V7OHmHe?si=ECrck2GxSluUZtXK11KiNQ
+
 ## Let's go! 
 
 Requirements: 
