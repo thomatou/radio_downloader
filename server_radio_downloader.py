@@ -16,9 +16,12 @@ class RadioDownloader:
         Verifies that the credentials of the user (client ID, client secret,
         username and refresh token) are accepted by the Spotify API before
         proceeding to any scraping.
+        Checks that the user has a playlist that matches with the name
+        specified.
         """
-        self.spotify_username = credentials.username
         self.identify()
+        self.playlist_id = \
+        self.get_spotify_playlist_id(credentials.playlist_name)
 
     def identify(self):
         """
@@ -32,7 +35,7 @@ class RadioDownloader:
                 redirect_uri='http://localhost/',
                 state=None,
                 scope='playlist-read-private playlist-modify-private',
-                username=self.spotify_username)
+                username=credentials.username)
 
             token = auth_id.refresh_access_token(credentials.refresh_token)\
             ['access_token']
@@ -44,6 +47,8 @@ class RadioDownloader:
             sys.exit()
 
     def new_browser_instance(self):
+        """Creates a headless Selenium browser instance."""
+
         options = Options()
         options.headless = True
 
@@ -61,11 +66,6 @@ class RadioDownloader:
         Will only stop with keyboard interrupt.
         The songs are also saved as text in the file output_filename.
         """
-
-        # Make your selenium browser headless.
-        options = Options()
-        options.headless = True
-
 
         tracks = {0:{'artist': '', 'song': ''}}
         counter = 1
@@ -108,7 +108,7 @@ class RadioDownloader:
                     # First get the spotify ID of each song in the batch
                     updated_json_dict = self.get_spotify_track_ids(tracks)
                     # Now add all the songs to our playlist named 'Djam Radio'
-                    self.populate_playlist('Djam Radio', updated_json_dict)
+                    self.populate_playlist(updated_json_dict)
 
                     # Let's save to disk the songs that we've scraped
                     with open(output_filename, 'a') as file:
@@ -128,7 +128,7 @@ class RadioDownloader:
     # Let's also restart the browser, so that we don't get timeouts
                     browser.quit()
 
-                    browser = new_browser_instance()
+                    browser = self.new_browser_instance()
 
             # If we hit an exception, let's save to file what we have in memory
             # so that we don't lose that data
@@ -141,7 +141,7 @@ class RadioDownloader:
 
                 # Might have had an issue with selenium, so restart the browser
                 browser.quit()
-                browser = new_browser_instance()
+                browser = self.new_browser_instance()
 
     def get_spotify_track_ids(self, json_dict):
         """
@@ -284,36 +284,36 @@ class RadioDownloader:
 
             name_of_playlist = input()
 
-    def populate_playlist(self, playlist_name, json_dict):
+    def populate_playlist(self, json_dict):
         """
-        Given a playlist_id and a json_dict of songs to add to the playlist,
-        this function will add the songs of the json to the playlist, if they
+        Given a json_dict of songs that have been scraped, this function
+        will add the songs of the json to the playlist whose name
+        was specified in the credentials file, if they
         aren't already in there (i.e. checks for duplicates).
 
         Need to pass in a json dict which contains the songs that you want to
         add, as created by RadioDownloader().djam_radio().
+
+        The playlist_id was determined upon instantiation of this class.
         """
 
         # First, let's access the playlist of interest
         spotify = self.identify()
-        playlist_id = self.get_spotify_playlist_id(playlist_name)
 
         # And let's store in a set all the spotify IDs of the songs that
         # already are in the playlist (to avoid introducing duplicates)
         counter = 0
         existing_songs = set()
+        current_song_ids = [0]
 
-        while True:
+        while current_song_ids:
             current_playlist_songs = spotify.user_playlist_tracks(
-                user=self.spotify_username,
-                playlist_id=playlist_id,
+                user=credentials.username,
+                playlist_id=self.playlist_id,
                 offset=counter)
 
             current_song_ids = [item['track']['id'] for item in \
                                 current_playlist_songs['items']]
-
-            if not current_song_ids:
-                break
 
             counter += len(current_song_ids)
 
@@ -332,12 +332,11 @@ class RadioDownloader:
                     list_song_ids.append(song['spotify_id'])
             except KeyError:
                 reject_songs.append([song['artist'], song['song']])
-                continue
 
         # Now that we've compiled all of the new songs into one list,
         # let's add them to the playlist!
         if list_song_ids:
-            spotify.user_playlist_add_tracks(self.spotify_username,
+            spotify.user_playlist_add_tracks(credentials.username,
                                              playlist_id=playlist_id,
                                              tracks=list_song_ids)
 
@@ -347,9 +346,9 @@ class RadioDownloader:
         # playlist to file
         if reject_songs:
             with open('reject_songs.txt', 'a') as file:
-                for element in reject_songs:
-                    if element != ['', '']:
-                        file.write(str(element))
+                for song in reject_songs:
+                    if song != ['', '']:
+                        file.write(str(song))
 
 
 USER = RadioDownloader()
