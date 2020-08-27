@@ -43,6 +43,13 @@ class RadioDownloader:
             print('Invalid credentials. Exiting now...')
             sys.exit()
 
+    def new_browser_instance(self):
+        options = Options()
+        options.headless = True
+
+        return webdriver.Firefox(options=options,
+                    executable_path=credentials.geckodriver_executable_path)
+
     def djam_radio(self, output_filename):
         """
         Scrapes data from the djam radio website every 60 seconds.
@@ -67,8 +74,7 @@ class RadioDownloader:
         artist_path = '/html/body/div[2]/div[7]/div[1]/div[1]/div[1]/div[2]/span[1]/a'
         song_path = '/html/body/div[2]/div[7]/div[1]/div[1]/div[1]/div[2]/span[2]'
 
-        browser = webdriver.Firefox(options=options,
-                                    executable_path='/usr/bin/geckodriver')
+        browser = self.new_browser_instance()
 
         while True:
             try:
@@ -121,8 +127,8 @@ class RadioDownloader:
 
     # Let's also restart the browser, so that we don't get timeouts
                     browser.quit()
-                    browser = webdriver.Firefox(options=options,
-                                                executable_path='/usr/bin/geckodriver')
+
+                    browser = new_browser_instance()
 
             # If we hit an exception, let's save to file what we have in memory
             # so that we don't lose that data
@@ -135,8 +141,7 @@ class RadioDownloader:
 
                 # Might have had an issue with selenium, so restart the browser
                 browser.quit()
-                browser = webdriver.Firefox(options=options,
-                                            executable_path='/usr/bin/geckodriver')
+                browser = new_browser_instance()
 
     def get_spotify_track_ids(self, json_dict):
         """
@@ -157,8 +162,8 @@ class RadioDownloader:
             json_dict[song_num]['song']
 
             try:
-                temp = spotify.search(q=search_string, limit=1, type='track')
-                temp_id = temp['tracks']['items'][0]['id']
+                results = spotify.search(q=search_string, limit=1, type='track')
+                temp_id = results['tracks']['items'][0]['id']
                 json_dict[song_num].update({'spotify_id':temp_id})
                 continue
             except IndexError:
@@ -176,11 +181,11 @@ class RadioDownloader:
                     json_dict[song_num]['artist'].split('(')[0].strip() \
                     + ' ' + json_dict[song_num]['song'].split('(')[0].strip()
 
-                    temp = spotify.search(q=search_string,
+                    results = spotify.search(q=search_string,
                                           limit=1,
                                           type='track')
 
-                    temp_id = temp['tracks']['items'][0]['id']
+                    temp_id = results['tracks']['items'][0]['id']
                     json_dict[song_num].update({'spotify_id':temp_id})
                     print("IndexError caught with song ", search_string)
                     continue
@@ -199,11 +204,11 @@ class RadioDownloader:
                     search_string = json_dict[song_num]['artist'].split('feat')[0].strip() \
                     + ' ' + json_dict[song_num]['song'].split('feat')[0].strip()
 
-                    temp = spotify.search(q=search_string,
+                    results = spotify.search(q=search_string,
                                           limit=1,
                                           type='track')
 
-                    temp_id = temp['tracks']['items'][0]['id']
+                    temp_id = results['tracks']['items'][0]['id']
                     json_dict[song_num].update({'spotify_id':temp_id})
                     print("IndexError caught with song ", search_string)
                     continue
@@ -219,11 +224,11 @@ class RadioDownloader:
                     search_string = json_dict[song_num]['artist'] + ' ' + \
                     json_dict[song_num]['song'].split()[0]
 
-                    temp = spotify.search(q=search_string,
+                    results = spotify.search(q=search_string,
                                           limit=1,
                                           type='track')
 
-                    temp_id = temp['tracks']['items'][0]['id']
+                    temp_id = results['tracks']['items'][0]['id']
 
                     json_dict[song_num].update({'spotify_id':temp_id})
                     print("IndexError caught with overly long song ",
@@ -241,11 +246,11 @@ class RadioDownloader:
                     search_string = ''.join(json_dict[song_num]['artist'].split()[:2]) + \
                      ' ' + json_dict[song_num]['song']
 
-                    temp = spotify.search(q=search_string,
+                    results = spotify.search(q=search_string,
                                           limit=1,
                                           type='track')
 
-                    temp_id = temp['tracks']['items'][0]['id']
+                    temp_id = results['tracks']['items'][0]['id']
 
                     json_dict[song_num].update({'spotify_id':temp_id})
                     print("IndexError caught with overly long artist name ",
@@ -265,7 +270,7 @@ class RadioDownloader:
         """
         spotify = self.identify()
 
-        playlists = spotify.user_playlists('thomatou', limit=50)
+        playlists = spotify.user_playlists(credentials.username, limit=50)
 
         while True:
 
