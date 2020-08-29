@@ -118,12 +118,8 @@ class RadioDownloader:
                         for song in tracks:
                             file.write(song[0] + '///' + song[1] + '\n')
 
-    # Now we can clear the tracks in memory but keep the latest
-    # song scraped in the dic so we don't get a duplicate on the next iteration
-    # of the while loop
+                    # Now we can clear the tracks in memory
                     tracks = set()
-                    tracks.add(temp_track)
-                    print(tracks)
 
     # Let's also restart the browser, so that we don't get timeouts
                     browser.quit()
