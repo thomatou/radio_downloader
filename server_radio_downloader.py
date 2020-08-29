@@ -68,8 +68,7 @@ class RadioDownloader:
         The songs are also saved as text in the file output_filename.
         """
 
-        tracks = {0:{'artist': '', 'song': ''}}
-        counter = 1
+        tracks = set()
 
         # These are the paths to the info we're interested in on the webpage
         artist_path = '/html/body/div[2]/div[7]/div[1]/div[1]/div[1]/div[2]/span[1]/a'
@@ -86,11 +85,7 @@ class RadioDownloader:
                 artist = browser.find_element_by_xpath(artist_path).text
                 song = browser.find_element_by_xpath(song_path).text
 
-                # Check if a new song is on.
-                # If not go through the while loop again.
-                if artist == tracks[counter-1]['artist'] and \
-                song == tracks[counter-1]['song']:
-                    continue
+                temp_track = (artist,song)
 
                 # Need to discard all 'songs' that start with
                 # 'Cinema' or 'Television' since these are jingles and not
@@ -98,33 +93,36 @@ class RadioDownloader:
                 if artist in ('Cinema', 'Television'):
                     continue
 
-                # If we have a new song, put that into the dictionary
-                tracks.update({counter:{'artist': artist, 'song': song}})
-                counter += 1
+                # Check if a new song is on.
+                # If not go through the while loop again.
+                if temp_track in tracks:
+                    continue
 
-                print(counter)
+                # If we have a new song, put that into the dictionary
+                tracks.add(temp_track)
+                print(len(tracks))
 
                 # Let's process the last 10 songs and add them to the playlist
-                if counter % 2 == 0:
+                if len(tracks) % 2 == 0:
                     # First get the spotify ID of each song in the batch
-                    updated_json_dict = self.get_spotify_track_ids(tracks)
+                    updated_tracks = self.get_spotify_track_ids(tracks)
                     # Now add all the songs to our playlist named 'Djam Radio'
-                    self.populate_playlist(updated_json_dict)
+                    self.populate_playlist(updated_tracks)
 
                     # Let's save to disk the songs that we've scraped
+
+                    ### HOW do you prevent the last song to be written to file
+                    # twice
                     with open(output_filename, 'a') as file:
-                        for song_num in tracks:
-                            file.write(tracks[song_num]['artist'] + '///' +\
-                                       tracks[song_num]['song'] + '\n')
+                        for song in tracks:
+                            file.write(song[0] + '///' + song[1] + '\n')
 
     # Now we can clear the tracks in memory but keep the latest
     # song scraped in the dic so we don't get a duplicate on the next iteration
     # of the while loop
-                    temp_tracks = {1:{'artist': tracks[counter-1]['artist'],
-                                      'song': tracks[counter-1]['song']}}
-                    print(temp_tracks)
-                    tracks = temp_tracks
-                    counter = 2
+                    tracks = set()
+                    tracks.add(temp_track)
+                    print(tracks)
 
     # Let's also restart the browser, so that we don't get timeouts
                     browser.quit()
@@ -135,37 +133,40 @@ class RadioDownloader:
             except Exception as ex:
                 print('Caught an exception', ex)
                 with open(output_filename, 'a') as file:
-                    for song_num in tracks:
-                        file.write(tracks[song_num]['artist'] + '///' +\
-                                   tracks[song_num]['song'] + '\n')
+                    for song in tracks:
+                        file.write(song[0] + '///' + song[1] + '\n')
 
                 # Might have had an issue with selenium, so restart the browser
                 browser.quit()
                 browser = self.new_browser_instance()
 
-    def get_spotify_track_ids(self, json_dict):
+    def get_spotify_track_ids(self, song_set):
         """
         Searches the spotify database for a track ID based on the name of the
-        artist and name of the song, as specified in the json dict.
+        artist and name of the song, as specified in the set passed in.
+        Each element of the set is a list containing the artist in first
+        position, and song name in second position.
         Not all songs posted on the webradio appear exactly as is when
         searching spotify (e.g. because of a typo in the web radio info).
         If searching artist + song name doesn't match with a spotify song, try
         to modify the search string to match.
-        Updates the json dict to include the new field, track_id.
+        Returns a list of all the track_ids that were.
         This track_id is required to populate the spotify playlist.
         """
 
         spotify = self.identify()
+        track_ids = []
+        reject_songs = []
 
-        for song_num in json_dict:
-            search_string = json_dict[song_num]['artist'] + ' ' + \
-            json_dict[song_num]['song']
+        for artist, song in tracks:
+            search_string = artist + ' ' + song
 
             try:
                 results = spotify.search(q=search_string, limit=1, type='track')
                 temp_id = results['tracks']['items'][0]['id']
-                json_dict[song_num].update({'spotify_id':temp_id})
+                track_ids.append(temp_id)
                 continue
+
             except IndexError:
                 pass
 
@@ -178,22 +179,22 @@ class RadioDownloader:
             try:
                 if '(' in search_string:
                     search_string = \
-                    json_dict[song_num]['artist'].split('(')[0].strip() \
-                    + ' ' + json_dict[song_num]['song'].split('(')[0].strip()
+                    artist.split('(')[0].strip() \
+                    + ' ' + song.split('(')[0].strip()
 
                     results = spotify.search(q=search_string,
                                           limit=1,
                                           type='track')
 
                     temp_id = results['tracks']['items'][0]['id']
-                    json_dict[song_num].update({'spotify_id':temp_id})
-                    print("IndexError caught with song ", search_string)
+                    track_ids.append(temp_id)
+                    print("IndexError caught with brackets in song ",
+                    artist, ' ', song)
                     continue
 
             # If that doesn't work, reset search_string
             except IndexError:
-                search_string = json_dict[song_num]['artist'] + ' ' + \
-                json_dict[song_num]['song']
+                pass
 
             # If that doesn't work, see if there's a 'feat' in the song or
             # artist name that we can remove, and only keep what comes before
@@ -201,15 +202,15 @@ class RadioDownloader:
 
             try:
                 if 'feat' in search_string:
-                    search_string = json_dict[song_num]['artist'].split('feat')[0].strip() \
-                    + ' ' + json_dict[song_num]['song'].split('feat')[0].strip()
+                    search_string = artist.split('feat')[0].strip() \
+                    + ' ' + song.split('feat')[0].strip()
 
                     results = spotify.search(q=search_string,
                                           limit=1,
                                           type='track')
 
                     temp_id = results['tracks']['items'][0]['id']
-                    json_dict[song_num].update({'spotify_id':temp_id})
+                    track_ids.append(temp_id)
                     print("IndexError caught with song ", search_string)
                     continue
 
@@ -220,17 +221,16 @@ class RadioDownloader:
             # found with only the first word of the song + full name of artist
 
             try:
-                if len(json_dict[song_num]['song']) > 1:
-                    search_string = json_dict[song_num]['artist'] + ' ' + \
-                    json_dict[song_num]['song'].split()[0]
+                if len(song.split()) > 1:
+                    search_string = artist + ' ' + \
+                    song.split()[0]
 
                     results = spotify.search(q=search_string,
                                           limit=1,
                                           type='track')
 
                     temp_id = results['tracks']['items'][0]['id']
-
-                    json_dict[song_num].update({'spotify_id':temp_id})
+                    track_ids.append(temp_id)
                     print("IndexError caught with overly long song ",
                           search_string)
                     continue
@@ -242,9 +242,9 @@ class RadioDownloader:
             # found with only the two first word of the artist + full name of
             # song
             try:
-                if len(json_dict[song_num]['artist']) > 2:
-                    search_string = ''.join(json_dict[song_num]['artist'].split()[:2]) + \
-                     ' ' + json_dict[song_num]['song']
+                if len(artist.split()) > 2:
+                    search_string = ''.join(artist.split()[:2]) + \
+                     ' ' + song
 
                     results = spotify.search(q=search_string,
                                           limit=1,
@@ -252,16 +252,25 @@ class RadioDownloader:
 
                     temp_id = results['tracks']['items'][0]['id']
 
-                    json_dict[song_num].update({'spotify_id':temp_id})
+                    track_ids.append(temp_id)
                     print("IndexError caught with overly long artist name ",
                           search_string)
 
             except IndexError:
+            # If nothing is found at that point, then make a note of this
+            # and move on
+                reject_songs.append(artist + '///' + song)
                 pass
 
-            # If nothing is found at that point, then fuck it, move on
 
-        return json_dict
+        # Write the songs that weren't found on spotify to file
+        with open('reject_songs.txt', 'a') as file:
+            for song in reject_songs:
+                file.write(song + '\n')
+
+        # And return the list of the spotify ids of the songs that
+        # can be added to the playlist
+        return track_ids
 
     def get_spotify_playlist_id(self, name_of_playlist):
         """
@@ -284,17 +293,16 @@ class RadioDownloader:
 
             name_of_playlist = input()
 
-    def populate_playlist(self, json_dict):
+    def populate_playlist(self, song_ids):
         """
-        Given a json_dict of songs that have been scraped, this function
-        will add the songs of the json to the playlist whose name
-        was specified in the credentials file, if they
-        aren't already in there (i.e. checks for duplicates).
+        Given a list of spotify songs IDs, this function will add these songs
+        to the playlist whose name was specified in the credentials file, if
+        they aren't already in there (i.e. checks for duplicates).
 
-        Need to pass in a json dict which contains the songs that you want to
-        add, as created by RadioDownloader().djam_radio().
+        Need to pass in a list of spotify song IDs, as outputted by
+        self.get_spotify_track_ids().
 
-        The playlist_id was determined upon instantiation of this class.
+        The playlist_id is determined upon instantiation of this class.
         """
 
         # First, let's access the playlist of interest
@@ -319,36 +327,21 @@ class RadioDownloader:
 
             existing_songs.update(current_song_ids)
 
-        # Now let's extract all the song ids from the dictionary that was
-        # passed in. In the process, let's check that the songs that we want to
-        # add don't exist in the playlist already.
-        # If there are any songs for which we didn't find a spotify ID,
-        # let's store those in reject_songs o we can write them to disk later.
+        # Let's check that the songs that we want to add don't exist in the
+        # playlist already.
+
         list_song_ids = []
-        reject_songs = []
-        for song in json_dict.values():
-            try:
-                if song['spotify_id'] not in existing_songs:
-                    list_song_ids.append(song['spotify_id'])
-            except KeyError:
-                reject_songs.append([song['artist'], song['song']])
+        for song in song_ids:
+            if song not in existing_songs:
+                list_song_ids.append(song)
 
         # Now that we've compiled all of the new songs into one list,
         # let's add them to the playlist!
-        if list_song_ids:
-            spotify.user_playlist_add_tracks(credentials.username,
-                                             playlist_id=self.playlist_id,
-                                             tracks=list_song_ids)
+        spotify.user_playlist_add_tracks(credentials.username,
+                                         playlist_id=self.playlist_id,
+                                         tracks=list_song_ids)
+        print('Playlist populated...')
 
-            print('Playlist populated...')
-
-        # If any, let's write the name of songs which we couldn't add to the
-        # playlist to file
-        if reject_songs:
-            with open('reject_songs.txt', 'a') as file:
-                for song in reject_songs:
-                    if song != ['', '']:
-                        file.write(str(song))
 
 
 USER = RadioDownloader()
