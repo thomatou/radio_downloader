@@ -1,3 +1,4 @@
+import traceback
 import sys
 import time
 import spotipy
@@ -132,6 +133,7 @@ class RadioDownloader:
             # so that we don't lose that data
             except Exception as ex:
                 print('Caught an exception', ex)
+                traceback.print_tb(ex.__traceback__)
                 with open(output_filename, 'a') as file:
                     for song in tracks:
                         file.write(song[0] + '///' + song[1] + '\n')
@@ -158,7 +160,7 @@ class RadioDownloader:
         track_ids = []
         reject_songs = []
 
-        for artist, song in tracks:
+        for artist, song in song_set:
             search_string = artist + ' ' + song
 
             try:
@@ -337,12 +339,31 @@ class RadioDownloader:
 
         # Now that we've compiled all of the new songs into one list,
         # let's add them to the playlist!
-        spotify.user_playlist_add_tracks(credentials.username,
-                                         playlist_id=self.playlist_id,
-                                         tracks=list_song_ids)
-        print('Playlist populated...')
+        if list_song_ids:
+            spotify.user_playlist_add_tracks(credentials.username,
+                                             playlist_id=self.playlist_id,
+                                             tracks=list_song_ids)
+            print('Playlist populated...')
+        else:
+            print('No new songs to add...')
 
 
 
 USER = RadioDownloader()
 USER.djam_radio('list_of_songs.txt')
+#
+#
+# with open('list_of_songs.txt', 'r') as f:
+#     data = f.read().split('\n')
+#
+# list_songs = []
+# for song in data:
+#     if '///' in song and len(song) > 3:
+#         artist, track = song.split('///')[0], song.split('///')[1]
+#         list_songs.append([artist,track])
+#
+#
+# USER = RadioDownloader()
+# song_ids = USER.get_spotify_track_ids(list_songs)
+#
+# USER.populate_playlist(song_ids)
