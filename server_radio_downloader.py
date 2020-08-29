@@ -34,7 +34,8 @@ class RadioDownloader:
                 client_secret=credentials.client_secret,
                 redirect_uri='http://localhost/',
                 state=None,
-                scope='playlist-read-private playlist-modify-private',
+                # scope='playlist-read-private playlist-modify-private playlist-modify-public user-read-private user-library-read',
+                scope='playlist-read-private playlist-modify-private playlist-modify-public user-library-read user-read-private',
                 username=credentials.username)
 
             token = auth_id.refresh_access_token(credentials.refresh_token)\
@@ -70,7 +71,7 @@ class RadioDownloader:
         tracks = {0:{'artist': '', 'song': ''}}
         counter = 1
 
-        # These are the paths to the info we're interested in on webpage
+        # These are the paths to the info we're interested in on the webpage
         artist_path = '/html/body/div[2]/div[7]/div[1]/div[1]/div[1]/div[2]/span[1]/a'
         song_path = '/html/body/div[2]/div[7]/div[1]/div[1]/div[1]/div[2]/span[2]'
 
@@ -104,7 +105,7 @@ class RadioDownloader:
                 print(counter)
 
                 # Let's process the last 10 songs and add them to the playlist
-                if counter % 10 == 0:
+                if counter % 2 == 0:
                     # First get the spotify ID of each song in the batch
                     updated_json_dict = self.get_spotify_track_ids(tracks)
                     # Now add all the songs to our playlist named 'Djam Radio'
@@ -127,7 +128,6 @@ class RadioDownloader:
 
     # Let's also restart the browser, so that we don't get timeouts
                     browser.quit()
-
                     browser = self.new_browser_instance()
 
             # If we hit an exception, let's save to file what we have in memory
@@ -337,7 +337,7 @@ class RadioDownloader:
         # let's add them to the playlist!
         if list_song_ids:
             spotify.user_playlist_add_tracks(credentials.username,
-                                             playlist_id=playlist_id,
+                                             playlist_id=self.playlist_id,
                                              tracks=list_song_ids)
 
             print('Playlist populated...')
