@@ -21,7 +21,9 @@ Requirements:
 
 Assuming you already have an account with Spotify (premium or not), you'll need to register an app with them ([see here](https://developer.spotify.com/dashboard/applications), which will take you a whole two minutes). Make sure you set your app's redirect URI to `http://localhost/`. In return, you will be given a client ID and a client secret, which you will want to put into `mock_credentials.py`; this will authorize the various calls that you'll make to the Spotify API. You will also need to input your Spotify username into the `mock_credentials.py` file, and change the name of `mock_credentials.py` to `credentials.py`.
 
-Now, in the command-line of your local machine, run `python3.x generate_refresh_token`. This will open up a browser page, so make sure you're on a machine that has a browser with GUI (i.e. not an Always Free Oracle server). Follow the instructions in the command line and a refresh token will be given to you, which you will need to put into `credentials.py`. This will prevent you from having to re-identify with the Spotify API every hour or so, thus enabling the script to run indefinitely.
+## Note: Need to specify playlist name in the credentials file
+
+Now, in the command-line of your local machine, run `python3.x generate_refresh_token.py`. This will open up a browser page, so make sure you're on a machine that has a browser with GUI (i.e. not an Always Free Oracle server). Follow the instructions in the command line and a refresh token will be given to you, which you will need to put into `credentials.py`. This will prevent you from having to re-identify with the Spotify API every hour or so, thus enabling the script to run indefinitely.
 
 Finally, create a playlist called "Djam Radio" in Spotify (case-sensitive), which is where the songs will be dumped.
 
