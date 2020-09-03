@@ -17,7 +17,7 @@ Requirements:
 * Python 3.x (tested with python3.7)
 * [`spotipy`](https://spotipy.readthedocs.io/en/2.9.0/)
 * [`selenium`](https://pypi.org/project/selenium/)
-* [`geckodriver`](https://github.com/mozilla/geckodriver/releases). Make sure you specify the absolute path to your geckodriver file in the `mock_credentials.py` file.
+* [`geckodriver`](https://github.com/mozilla/geckodriver/releases). Make sure you specify the absolute path to your geckodriver executable file in the `mock_credentials.py` file.
 
 Assuming you already have an account with Spotify (premium or not), you'll need to register an app with them ([see here](https://developer.spotify.com/dashboard/applications), which will take you a whole two minutes). Make sure you set your app's redirect URI to `http://localhost/`. In return, you will be given a client ID and a client secret, which you will want to put into `mock_credentials.py`; this will authorize the various calls that you'll make to the Spotify API. You will also need to input your Spotify username into the `mock_credentials.py` file, and change the name of `mock_credentials.py` to `credentials.py`.
 
@@ -25,11 +25,11 @@ Assuming you already have an account with Spotify (premium or not), you'll need 
 
 Now, in the command-line of your local machine, run `python3.x generate_refresh_token.py`. This will open up a browser page, so make sure you're on a machine that has a browser with GUI (i.e. not an Always Free Oracle server). Follow the instructions in the command line and a refresh token will be given to you, which you will need to put into `credentials.py`. This will prevent you from having to re-identify with the Spotify API every hour or so, thus enabling the script to run indefinitely.
 
-Finally, create a playlist called "Djam Radio" in Spotify (case-sensitive), which is where the songs will be dumped.
+Finally, choose a playlist of your own (new or pre-existing, so long as the playlist is yours) in Spotify and input its (case-sensitive) name in the `credentials.py` file. This is  where the scraped songs will be dumped.
 
 You now have everything for your script to run on your machine, by running the `python3.x ubuntu_server_radio_downloader.py`. The script will also dump the name of the songs in the file `list_of_songs.txt`. Occasionally, some songs played on this radio are not available through Spotify, in which case the song name will be recorded in the file `reject_songs.txt`.
 
-I recommend setting up a [free server](https://www.oracle.com/cloud/free/#always-free) and running this script on there. Note that an oracle Always Free ubuntu server will require installation of python and the dependencies listed above. Assuming all of the dependencies have been installed, the script can be run indefinitely using the `nohup python3.x ubuntu_server_radio_downloader.py` command, which will prevent the process from crashing when you disconnect from the server.
+I recommend setting up a [free server](https://www.oracle.com/cloud/free/#always-free) and running this script on there. Note that an oracle Always Free ubuntu server will require installation of python and the dependencies listed above. Assuming all of the dependencies have been installed, the script can be run indefinitely using the `nohup python3.x -u ubuntu_server_radio_downloader.py &` command, which will prevent the process from crashing when you disconnect from the server.
 
 
 
