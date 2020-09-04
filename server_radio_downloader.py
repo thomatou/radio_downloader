@@ -28,25 +28,36 @@ class RadioDownloader:
         """
         Identify with the spotify API. Will automatically refresh the access
         token to enable the user to read and modify spotify playlists.
+        If the program fails to identify on the first attempt, it will try
+        identifying a couple more times before exiting.
         """
-        try:
-            auth_id = spotipy.oauth2.SpotifyOAuth(
-                client_id=credentials.client_id,
-                client_secret=credentials.client_secret,
-                redirect_uri='http://localhost/',
-                state=None,
-                # scope='playlist-read-private playlist-modify-private playlist-modify-public user-read-private user-library-read',
-                scope='playlist-read-private playlist-modify-private playlist-modify-public user-library-read user-read-private',
-                username=credentials.username)
+        counter = 0
+        while counter < 3:
+            try:
+                auth_id = spotipy.oauth2.SpotifyOAuth(
+                    client_id=credentials.client_id,
+                    client_secret=credentials.client_secret,
+                    redirect_uri='http://localhost/',
+                    state=None,
+                    # scope='playlist-read-private playlist-modify-private playlist-modify-public user-read-private user-library-read',
+                    scope='playlist-read-private playlist-modify-private playlist-modify-public user-library-read user-read-private',
+                    username=credentials.username)
 
-            token = auth_id.refresh_access_token(credentials.refresh_token)\
-            ['access_token']
+                token = auth_id.refresh_access_token(credentials.refresh_token)\
+                ['access_token']
 
-            return spotipy.Spotify(auth=token)
+                return spotipy.Spotify(auth=token)
 
-        except Exception:
-            print('Invalid credentials. Exiting now...')
-            sys.exit()
+            except Exception:
+                counter += 1
+                print('Invalid credentials. Retrying...')
+                print('Current time is: ', time.)
+                time.sleep(30)
+
+        print('Invalid credentials on 3 separate attempts. Exiting program...')
+        print(time.strftime('%c'))
+        sys.exit()
+
 
     def new_browser_instance(self):
         """Creates a headless Selenium browser instance."""
@@ -104,11 +115,12 @@ class RadioDownloader:
                 print(len(tracks))
 
                 # Let's process the last 10 songs and add them to the playlist
-                if len(tracks) % 2 == 0:
+                if len(tracks) % 10 == 0:
                     # First get the spotify ID of each song in the batch
                     updated_tracks = self.get_spotify_track_ids(tracks)
                     # Now add all the songs to our playlist named 'Djam Radio'
                     self.populate_playlist(updated_tracks)
+                    print(time.strftime('%c'))
 
                     # Let's save to disk the songs that we've scraped
 
@@ -130,6 +142,7 @@ class RadioDownloader:
             except Exception as ex:
                 print('Caught an exception', ex)
                 traceback.print_tb(ex.__traceback__)
+                print(time.strftime('%c'))
                 with open(output_filename, 'a') as file:
                     for song in tracks:
                         file.write(song[0] + '///' + song[1] + '\n')
@@ -346,7 +359,9 @@ class RadioDownloader:
 
 
 USER = RadioDownloader()
-USER.djam_radio('list_of_songs.txt')
+
+print(USER.get_spotify_playlist_id('Djam Radio'))
+#USER.djam_radio('list_of_songs.txt')
 #
 #
 # with open('list_of_songs.txt', 'r') as f:
