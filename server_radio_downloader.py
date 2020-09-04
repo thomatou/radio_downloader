@@ -39,7 +39,6 @@ class RadioDownloader:
                     client_secret=credentials.client_secret,
                     redirect_uri='http://localhost/',
                     state=None,
-                    # scope='playlist-read-private playlist-modify-private playlist-modify-public user-read-private user-library-read',
                     scope='playlist-read-private playlist-modify-private playlist-modify-public user-library-read user-read-private',
                     username=credentials.username)
 
@@ -124,8 +123,8 @@ class RadioDownloader:
 
                     # Let's save to disk the songs that we've scraped
 
-                    ### HOW do you prevent the last song to be written to file
-                    # twice
+            # How do you prevent the last song from getting
+            # written to file twice?
                     with open(output_filename, 'a') as file:
                         for song in tracks:
                             file.write(song[0] + '///' + song[1] + '\n')
