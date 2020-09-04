@@ -50,7 +50,7 @@ class RadioDownloader:
             except Exception:
                 counter += 1
                 print('Invalid credentials. Retrying...')
-                print('Current time is: ', time.)
+                print('Current time is: ', time.strftime('%c'))
                 time.sleep(30)
 
         print('Invalid credentials on 3 separate attempts. Exiting program...')
@@ -358,22 +358,4 @@ class RadioDownloader:
 
 
 USER = RadioDownloader()
-
-print(USER.get_spotify_playlist_id('Djam Radio'))
-#USER.djam_radio('list_of_songs.txt')
-#
-#
-# with open('list_of_songs.txt', 'r') as f:
-#     data = f.read().split('\n')
-#
-# list_songs = []
-# for song in data:
-#     if '///' in song and len(song) > 3:
-#         artist, track = song.split('///')[0], song.split('///')[1]
-#         list_songs.append([artist,track])
-#
-#
-# USER = RadioDownloader()
-# song_ids = USER.get_spotify_track_ids(list_songs)
-#
-# USER.populate_playlist(song_ids)
+USER.djam_radio('list_of_songs.txt')
