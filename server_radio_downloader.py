@@ -204,7 +204,7 @@ class RadioDownloader:
 
             # If that doesn't work, reset search_string
             except IndexError:
-                pass
+                search_string = artist + ' ' + song
 
             # If that doesn't work, see if there's a 'feat' in the song or
             # artist name that we can remove, and only keep what comes before
@@ -248,12 +248,12 @@ class RadioDownloader:
             except IndexError:
                 pass
 
-            # If that fails, next thing to try is to see if the song can be
-            # found with only the two first word of the artist + full name of
-            # song
+            # If that fails, next thing to try is to see if the song can be found with only the two first word
+            # of the artist + full name of song
             try:
                 if len(artist.split()) > 2:
-                    search_string = ''.join(artist.split()[:2]) + \
+                    search_string = \
+                    ' '.join(artist.split()[:2]) + \
                      ' ' + song
 
                     results = spotify.search(q=search_string,
