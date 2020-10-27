@@ -85,9 +85,8 @@ class RadioDownloader:
         artist_path = '/html/body/div[2]/div[7]/div[1]/div[1]/div[1]/div[2]/span[1]/a'
         song_path = '/html/body/div[2]/div[7]/div[1]/div[1]/div[1]/div[2]/span[2]'
 
-        browser = self.new_browser_instance()
-
         try:
+            browser = self.new_browser_instance()
             browser.get('https://www.djamradio.com/')
 
             artist = browser.find_element_by_xpath(artist_path).text
