@@ -110,7 +110,7 @@ class RadioDownloader:
             print(len(tracks))
 
             # Let's process the last 10 songs and add them to the playlist
-            if len(tracks) % 10 == 0:
+            if len(tracks) % 3 == 0:
                 # First get the spotify ID of each song in the batch
                 updated_tracks = self.get_spotify_track_ids(tracks)
                 # Now add all the songs to our playlist named 'Djam Radio'
@@ -284,22 +284,72 @@ class RadioDownloader:
         """
         Will look into a user's playlists and return the id of a playlist
         whose name matches exactly the name specified. Case-sensitive.
+        If such a playlist is not found, one with that exact name will be
+        created, and its id returned.
         """
         spotify = self.identify()
+        counter = 0
+        current_playlist_ids = [(None,None)]
 
-        playlists = spotify.user_playlists(credentials.username, limit=50)
+        # Have to iterate through all the playlists of the user
+        while current_playlist_ids:
+            current_playlists = spotify.user_playlists(
+                user=credentials.username,
+                limit=50,
+                offset=counter)
 
-        while True:
+            current_playlist_ids = [(item['name'],item['id']) for
+                                    item in current_playlists['items']]
 
-            for item in playlists['items']:
-                if item['name'] == name_of_playlist:
-                    return item['id']
+            for name, id in current_playlist_ids:
+                if name == name_of_playlist:
+                    return id
 
-            print('Playlist not found. Input is case-sensitive.')
-            print('Please re-enter the name of the playlist whose ID you wish\
-                   to access:')
+            counter += len(current_playlist_ids)
+            # print(counter)
+            # print(current_playlist_ids)
 
-            name_of_playlist = input()
+        # If we can't find the playlist with the name specified, create it!
+        print("A playlist with name:", name_of_playlist, 'was not found.')
+
+        return self.create_spotify_playlist(name_of_playlist)
+
+    def create_spotify_playlist(self, name_of_playlist):
+        """
+        Creates a new playlist with the desired name, and returns the id of
+        the playlist.
+
+        Only used in the event that the user specifies a playlist name that
+        doesn't exist in their list of playlists.
+        """
+
+        try:
+            spotify = self.identify()
+            new_playlist = spotify.user_playlist_create(credentials.username, name=name_of_playlist)
+            print('Created playlist with name:', name_of_playlist)
+            return new_playlist['id']
+
+        except Exception as ex:
+            print('Failed to create playlist with name', playlist_name)
+            print('Exception:', ex)
+
+    def check_playlist_name(self):
+        """
+        Checks if the current playlist name matches what it should be.
+        If not, amends the name of the playlist name to what it should be.
+        Assuming that this function is called every day, the playlist name
+        change happens on the first day of every month.
+        """
+
+        current_playlist_name = 'Djam Radio ' + \
+                datetime.utcnow().strftime("%B") + ' ' + \
+                datetime.utcnow().strftime('%Y')
+
+        # this only amends playlist_id if current_playlist_name doesn't exist
+        # in the user's list of playlists, i.e. if we're in a new month of the
+        # year
+
+        self.playlist_id = self.get_spotify_playlist_id(current_playlist_name)
 
     def populate_playlist(self, song_ids):
         """
@@ -354,12 +404,13 @@ class RadioDownloader:
             print('No new songs to add...')
 
 
+if __name__ == '__main__':
 
-USER = RadioDownloader()
-tracks = set()
+    USER = RadioDownloader()
+    tracks = set()
 
-schedule.every().minute.do(USER.djam_radio, 'list_of_songs.txt')
+    schedule.every().minute.do(USER.djam_radio, 'list_of_songs.txt')
 
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
