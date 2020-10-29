@@ -30,6 +30,10 @@ You now have everything for your script to run on your machine, by running the `
 
 I recommend setting up a [free server](https://www.oracle.com/cloud/free/#always-free) and running this script on there. Note that an oracle Always Free ubuntu server will require installation of python and the dependencies listed above. Assuming all of the dependencies have been installed, the script can be run indefinitely using the `nohup python3.x -u ubuntu_server_radio_downloader.py &` command, which will prevent the process from crashing when you disconnect from the server.
 
+## What if you want a new monthly playlist containing of all this month's songs? 
+
+The `monthly_scheduler.py` offers this functionality. Running `nohup python3.x -u monthly_scheduler.py &` will look for a playlist of the name "Djam Radio [current month] [current year]" in your existing playlists. If such a playlist does not exist, it will create it. All the songs scraped during that month will be put into this playlist. At the beginning of every month, this script will automatically create a new playlist with a name reflecting the current date, where all the new songs will be dumped. 
+
 
 
 
